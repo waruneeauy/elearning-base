@@ -1,0 +1,16 @@
+.w-100px {
+  width: 100px !important;
+}
+
+.close-button {
+  position: absolute;
+  right: 40px;
+  top: 20px;
+  cursor: pointer;
+}
+
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+}

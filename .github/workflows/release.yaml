@@ -1,0 +1,111 @@
+name: release
+run-name: release ${{ github.actor }}
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+  workflow_dispatch:
+env:
+  REGISTRY: docker.frappet.com
+  IMAGE_NAME: ehr/elearning-service
+  DEPLOY_HOST: frappet.com
+  COMPOSE_PATH: /home/frappet/docker/elearning
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Gen Version
+        id: gen_ver
+        run: |
+          if [[ $GITHUB_REF == 'refs/tags/'* ]]; then
+            IMAGE_VER="${GITHUB_REF##*/}"
+          else
+            IMAGE_VER=${{ github.event.inputs.IMAGE_VER }}
+          fi
+          if [[ $IMAGE_VER == '' ]]; then
+            IMAGE_VER='dev'
+          fi
+          echo "{\"version\":\"$IMAGE_VER\", \"date\":\"$(date +"%Y-%m-%d_%T")\",\"ref\":\"$GITHUB_REF\" }" > ./version.json
+          echo '::set-output name=image_ver::'$IMAGE_VER
+          cat ./version.json
+      - name: Debug act
+        if: ${{ env.ACT }}
+        run: |
+          echo $GITHUB_REF
+          echo ${{ steps.gen_ver.outputs.image_ver }}
+          cat ./version.json
+          echo ${{ secrets.DOCKER_USER }}
+          echo ${{ secrets.DOCKER_PASS }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login in to registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
+      - name: Build and push docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.gen_ver.outputs.image_ver }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      - name: Debug act
+        if: ${{ env.ACT }}
+        run: |
+          cat ./version.json
+          echo ${{ secrets.DOCKER_USER }}
+          echo ${{ secrets.DOCKER_PASS }}
+      - name: Remote Deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          username: frappet
+          port: 10102
+          script: |
+            cd "${{ env.COMPOSE_PATH }}"
+            docker compose pull
+            docker compose up -d
+            echo "${{ steps.gen_ver.outputs.image_ver }}"> success
+      - name: Notify Discord Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "embeds": [{
+              "title": "✅ Deployment Success!",
+              "description": "**Details:**\n- Image: `${{env.IMAGE_NAME}}`\n- Version: `${{ steps.gen_ver.outputs.image_ver }}`\n- Deployed by: `${{github.actor}}`",
+              "color": 3066993,
+              "footer": {
+                "text": "Release Notification",
+                "icon_url": "https://example.com/success-icon.png"
+              },
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Notify Discord Failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "embeds": [{
+              "title": "❌ Deployment Failed!",
+              "description": "**Details:**\n- Image: `${{env.IMAGE_NAME}}`\n- Version: `${{ steps.gen_ver.outputs.image_ver }}`\n- Attempted by: `${{github.actor}}`",
+              "color": 15158332,
+              "footer": {
+                "text": "Release Notification",
+                "icon_url": "https://example.com/failure-icon.png"
+              },
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK }}

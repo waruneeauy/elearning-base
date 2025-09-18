@@ -1,0 +1,276 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LearnerUser {
+  learnerId   String          @id @default(uuid())
+  photo       String?         @db.Text
+  name        String          @db.VarChar(255)
+  email       String          @unique @db.VarChar(255)
+  password    String?
+  phoneNumber String?         @db.VarChar(15)
+  provider    String?
+  providerId  String?         @unique
+  createdAt   DateTime        @default(now())
+  createdBy   String?         @db.VarChar(36)
+  updatedAt   DateTime?       @updatedAt
+  updatedBy   String?         @db.VarChar(36)
+  userNo      Int             @default(0)
+  pwd         String?         @db.VarChar(255)
+  learnerCode LearnerCode[]
+  profile     LearnerProfile?
+}
+
+model LearnerProfile {
+  learnerUserId String      @id
+  birthday      DateTime?   @db.Date
+  gender        String?     @db.VarChar(10)
+  position      String?     @db.VarChar(255)
+  companyName   String?     @db.VarChar(255)
+  address       String?     @db.VarChar(500)
+  createdAt     DateTime    @default(now())
+  createdBy     String?     @db.VarChar(36)
+  updatedAt     DateTime?   @updatedAt
+  updatedBy     String?     @db.VarChar(36)
+  learnerUser   LearnerUser @relation(fields: [learnerUserId], references: [learnerId])
+}
+
+model ConfigData {
+  key       ConfigKeyName @id
+  title     String?       @db.VarChar(255)
+  content   String?       @db.Text
+  createdAt DateTime      @default(now())
+  createdBy String        @db.VarChar(36)
+  updatedAt DateTime?     @updatedAt
+  updatedBy String?       @db.VarChar(36)
+}
+
+model CourseCategory {
+  id        String    @id @default(uuid())
+  name      String    @db.VarChar(255)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  createdBy String    @db.VarChar(36)
+  updatedAt DateTime? @updatedAt
+  updatedBy String?   @db.VarChar(36)
+  course    Course[]
+}
+
+model Course {
+  id               String          @id @default(uuid())
+  name             String          @db.VarChar(255)
+  description      String?         @db.Text
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  createdBy        String          @db.VarChar(36)
+  updatedAt        DateTime?       @updatedAt
+  updatedBy        String?         @db.VarChar(36)
+  courseRoot       CourseRoot[]
+  learnerCode      LearnerCode[]
+  learnerCourse    LearnerCourse[]
+  courseCategoryId String?         @db.VarChar(36)
+  courseCategory   CourseCategory? @relation(fields: [courseCategoryId], references: [id])
+}
+
+model CourseRoot {
+  id          String        @id @default(uuid())
+  courseId    String        @db.VarChar(36)
+  title       String        @db.VarChar(255)
+  description String?       @db.Text
+  ordering    Int           @default(0)
+  isMain      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  createdBy   String        @db.VarChar(36)
+  updatedAt   DateTime?     @updatedAt
+  updatedBy   String?       @db.VarChar(36)
+  courseChild CourseChild[]
+  course      Course        @relation(fields: [courseId], references: [id])
+
+  @@index([courseId], map: "CourseRoot_courseId_fkey")
+}
+
+model CourseChild {
+  id            String          @id @default(uuid())
+  courseRootId  String          @db.VarChar(36)
+  title         String          @db.VarChar(255)
+  description   String?         @db.Text
+  ordering      Int             @default(0)
+  type          CourseType      @default(VIDEO)
+  minute        Int             @default(1)
+  isLocked      Boolean         @default(true)
+  isMain        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  createdBy     String          @db.VarChar(36)
+  updatedAt     DateTime?       @updatedAt
+  updatedBy     String?         @db.VarChar(36)
+  courseRoot    CourseRoot      @relation(fields: [courseRootId], references: [id])
+  courseContent CourseContent?
+  courseQuiz    CourseQuiz[]
+  learnerCourse LearnerCourse[]
+
+  @@index([courseRootId], map: "CourseChild_courseRootId_fkey")
+}
+
+model CourseContent {
+  courseChildId String      @id @db.VarChar(36)
+  title         String      @db.VarChar(255)
+  content       String      @db.Text
+  videoUrl      String?     @db.VarChar(255)
+  createdAt     DateTime    @default(now())
+  createdBy     String      @db.VarChar(36)
+  updatedAt     DateTime?   @updatedAt
+  updatedBy     String?     @db.VarChar(36)
+  courseChild   CourseChild @relation(fields: [courseChildId], references: [id])
+}
+
+model CourseQuiz {
+  id               String             @id @default(uuid())
+  courseChildId    String             @db.VarChar(36)
+  no               Int                @default(1)
+  subNo            Int                @default(0)
+  type             QuizType           @default(TEXT)
+  description      String             @db.LongText
+  explanation      String?            @db.LongText
+  score            Int                @default(1)
+  createdAt        DateTime           @default(now())
+  createdBy        String             @db.VarChar(36)
+  updatedAt        DateTime?          @updatedAt
+  updatedBy        String?            @db.VarChar(36)
+  courseChild      CourseChild        @relation(fields: [courseChildId], references: [id])
+  courseQuizAnswer CourseQuizAnswer[]
+
+  @@index([courseChildId], map: "CourseQuiz_courseChildId_fkey")
+}
+
+model CourseQuizAnswer {
+  id          String     @id @default(uuid())
+  quizId      String     @db.VarChar(36)
+  no          Int        @default(1)
+  description String     @db.Text
+  isCorrect   Boolean    @default(false)
+  ordering    Int        @default(0)
+  quiz        CourseQuiz @relation(fields: [quizId], references: [id])
+
+  @@index([quizId], map: "CourseQuizAnswer_quizId_fkey")
+}
+
+model Customer {
+  id        String        @id @default(uuid())
+  name      String        @db.VarChar(255)
+  logo      String?       @db.LongText
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  createdBy String        @db.VarChar(36)
+  updatedAt DateTime?     @updatedAt
+  updatedBy String?       @db.VarChar(36)
+  learner   LearnerCode[]
+}
+
+model LearnerCode {
+  id            String       @id @default(uuid())
+  courseId      String       @db.VarChar(36)
+  customerId    String       @db.VarChar(36)
+  code          String       @db.VarChar(6)
+  isUsed        Boolean      @default(false)
+  usedAt        DateTime?
+  learnerId     String?      @db.VarChar(36)
+  status        Status       @default(START)
+  score         Int          @default(0)
+  scoreTotal    Int          @default(0)
+  createdAt     DateTime     @default(now())
+  createdBy     String       @db.VarChar(36)
+  updatedAt     DateTime?    @updatedAt
+  updatedBy     String?      @db.VarChar(36)
+  expiredDate   DateTime?
+  deadlineDate  DateTime?
+  completedDate DateTime?
+  course        Course       @relation(fields: [courseId], references: [id])
+  customer      Customer     @relation(fields: [customerId], references: [id])
+  learner       LearnerUser? @relation(fields: [learnerId], references: [learnerId])
+
+  @@index([courseId], map: "LearnerCode_courseId_fkey")
+  @@index([customerId], map: "LearnerCode_customerId_fkey")
+  @@index([learnerId], map: "LearnerCode_learnerId_fkey")
+}
+
+model LearnerCourse {
+  courseChildId String       @db.VarChar(36)
+  learnerId     String       @db.VarChar(36)
+  learnerCodeId String       @db.VarChar(36)
+  courseId      String       @db.VarChar(36)
+  isLocked      Boolean      @default(true)
+  status        StatusCourse @default(LOCKED)
+  scoreAmount   Int          @default(0)
+  ordering      Int          @default(0)
+  createdAt     DateTime     @default(now())
+  viewVideo     Int          @default(0)
+  startAt       DateTime?
+  endAt         DateTime?
+  minute        Int          @default(0)
+  isMain        Boolean      @default(true)
+  courseChild   CourseChild  @relation(fields: [courseChildId], references: [id])
+  course        Course       @relation(fields: [courseId], references: [id])
+
+  @@id([courseChildId, learnerCodeId])
+  @@index([courseId], map: "LearnerCourse_courseId_fkey")
+}
+
+model LearnerQuizAnswer {
+  learnerCodeId   String   @db.VarChar(36)
+  learnerId       String   @db.VarChar(36)
+  quizId          String   @db.VarChar(36)
+  answerNo        Int      @default(1)
+  answerId        String   @db.VarChar(36)
+  answerCorrectId String   @db.VarChar(36)
+  score           Int      @default(0)
+  createdAt       DateTime @default(now())
+  courseChildId   String?  @db.VarChar(36)
+
+  @@id([learnerCodeId, quizId, answerNo])
+}
+
+enum ConfigKeyName {
+  TUTORIAL
+  RESULT_DESC
+  TEST_TIME
+}
+
+enum CourseType {
+  VIDEO
+  DOCUMENT
+  QUIZ
+  SIMULATION
+}
+
+enum QuizType {
+  IMAGE
+  TEXT
+}
+
+enum Status {
+  START
+  INPROGRESS
+  DONE
+}
+
+enum StatusCourse {
+  LOCKED
+  START
+  INPROGRESS
+  DONE
+}
