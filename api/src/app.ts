@@ -25,38 +25,52 @@ app.use(
   })
 );
 
-// Use automated routes
-app.use("/api/v1", routes);
-app.use("/api/v1/app", userRoutes);
-
 // Configure express-session
 app.use(
   session({
     secret: process.env.SECRET_KEY_CLIENT || "defaultSecretKey", // Replace with a strong, unique secret
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: true }, // Set secure: true if using HTTPS
+    cookie: { secure: process.env.NODE_ENV === "production" }, // Set secure: true only in production
   })
 );
+
 // Initialize Passport and restore authentication state, if any, from the session
 // app.use(passport.initialize());
 // app.use(passport.session());
+
+// API Routes - Place BEFORE static file serving
 app.use("/api/v1/test", (req, res) => {
   res.send("Hello World: API is working");
 });
-// app.use("/auth", authRoutes);
+
+// Use automated routes
+app.use("/api/v1", routes);
+app.use("/api/v1/app", userRoutes);
 
 // File Upload Route
 app.use("/api/v1/upload", uploadRouter);
 
+// Public uploads folder
 app.use("/public", express.static(path.join(__dirname, "../uploads")));
 
-// Serve static files for web-app (main application)
-app.use("/", express.static(path.join(__dirname, "../static")));
-
-// Serve static files for admin panel
+// Serve static files for admin panel first (more specific paths)
 app.use("/admin", express.static(path.join(__dirname, "../admin")));
 app.use("/admin/_nuxt", express.static(path.join(__dirname, "../admin/_nuxt")));
+
+// Serve static files for web-app (main application) - This should be last
+app.use(express.static(path.join(__dirname, "../static")));
+
+// Catch-all handler for client-side routing (SPA fallback)
+app.get("*", (req, res) => {
+  // If the request is for admin, serve admin index.html
+  if (req.path.startsWith("/admin")) {
+    res.sendFile(path.join(__dirname, "../admin/index.html"));
+  } else {
+    // Otherwise serve main app index.html
+    res.sendFile(path.join(__dirname, "../static/index.html"));
+  }
+});
 // Add the global error handler middleware (after routes)
 app.use(errorHandler);
 
