@@ -133,7 +133,25 @@
           <div class="lesson-video__wrapper mt-3">
             <div class="lesson-video__iframe mb-20px">
               <div class="video-container">
+                <!-- วิธีที่ 1: ใช้ iframe embed (แนะนำสำหรับ YouTube) -->
+                <iframe
+                  v-if="
+                    items.content?.videoUrl?.includes('youtube.com') ||
+                    items.content?.videoUrl?.includes('youtu.be')
+                  "
+                  width="100%"
+                  :src="getYouTubeEmbedUrl(items.content?.videoUrl)"
+                  title="YouTube video player"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen
+                  @load="onPlay()"
+                ></iframe>
+
+                <!-- วิธีที่ 2: ใช้ VideoPlayer สำหรับไฟล์วิดีโออื่นๆ (MP4, WebM, etc.) -->
                 <VideoPlayer
+                  v-else
                   :video-url="items.content?.videoUrl"
                   :course-child-id="selectedCourse"
                   @onPlay="onPlay()"
@@ -446,6 +464,45 @@ const progressAll = ref();
 const score = ref();
 const firstCome = ref<boolean>(false);
 const scoreApi = ref();
+
+// ฟังก์ชันแปลง YouTube URL ให้เป็น embed URL
+const getYouTubeEmbedUrl = (url: string): string => {
+  if (!url) return "";
+
+  // รองรับ URL รูปแบบต่างๆ
+  let videoId = "";
+
+  // https://youtu.be/VIDEO_ID
+  if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  }
+  // https://www.youtube.com/watch?v=VIDEO_ID
+  else if (url.includes("youtube.com/watch?v=")) {
+    videoId = url.split("v=")[1].split("&")[0];
+  }
+  // https://www.youtube.com/embed/VIDEO_ID
+  else if (url.includes("youtube.com/embed/")) {
+    return url; // ถ้าเป็น embed URL แล้วให้ return กลับไป
+  }
+
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+
+  return url; // ถ้าไม่ใช่ YouTube URL ให้ return กลับไป
+};
+
+// ฟังก์ชันตัวอย่างสำหรับทดสอบ YouTube URL
+const testYouTubeUrl = () => {
+  const testUrl = "https://youtu.be/9hozpXbA6ek?si=ckVYWZZ7SvO4BhFo";
+  console.log("Original URL:", testUrl);
+  console.log("Embed URL:", getYouTubeEmbedUrl(testUrl));
+
+  // ตัวอย่างการใช้งานใน items.content.videoUrl
+  if (items.value && items.value.content) {
+    items.value.content.videoUrl = testUrl;
+  }
+};
 
 const fetchItems = async () => {
   const response: any = await useApi(
@@ -882,6 +939,14 @@ const onPlay = () => {
 .video-container {
   position: relative;
 
+  /* Responsive iframe สำหรับ YouTube */
+  iframe {
+    width: 100%;
+    aspect-ratio: 16/9; /* ใช้ aspect-ratio แทน height fixed */
+    min-height: 600px; /* กำหนด min-height เพื่อไม่ให้เล็กเกินไป */
+    border-radius: 8px;
+  }
+
   video {
     width: 100%;
     height: auto;
@@ -906,5 +971,29 @@ const onPlay = () => {
     font-size: 20px;
     cursor: pointer;
   }
+}
+
+/* Responsive design สำหรับ YouTube iframe */
+@media (max-width: 768px) {
+  .video-container iframe {
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-container iframe {
+    min-height: 200px;
+  }
+}
+
+/* Style สำหรับ YouTube link container */
+.youtube-link-container {
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6 !important;
+}
+
+.youtube-link-container:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd !important;
 }
 </style>
