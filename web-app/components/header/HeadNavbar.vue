@@ -38,10 +38,10 @@
               ></i>
               <input
                 type="text"
-                value
+                :value="$route.query.searchQuery"
                 name="searchQuery"
                 placeholder="Search courses..."
-                class
+                class="form-control"
               />
             </form>
           </div>

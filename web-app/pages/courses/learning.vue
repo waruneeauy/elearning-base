@@ -943,7 +943,7 @@ const onPlay = () => {
   iframe {
     width: 100%;
     aspect-ratio: 16/9; /* ใช้ aspect-ratio แทน height fixed */
-    min-height: 600px; /* กำหนด min-height เพื่อไม่ให้เล็กเกินไป */
+    min-height: 420px; /* กำหนด min-height เพื่อไม่ให้เล็กเกินไป */
     border-radius: 8px;
   }
 

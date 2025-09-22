@@ -287,7 +287,7 @@
                     class="iconify fs-18 courses-details__info_icon"
                     data-icon="mdi:video-outline"
                   ></i>
-                  <span>21 VDOs (2 hours)</span>
+                  <span>9 VDOs (2 hours)</span>
                 </span>
                 <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
                   <i
@@ -301,21 +301,21 @@
                     class="iconify fs-18 courses-details__info_icon"
                     data-icon="material-symbols:quiz-outline"
                   ></i>
-                  <span>15 Quiz (1-2 hours)</span>
+                  <span>1 Quiz (2-3 mins)</span>
                 </span>
-                <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
+                <!-- <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
                   <i
                     class="iconify fs-18 courses-details__info_icon"
                     data-icon="material-symbols:assignment-outline"
                   ></i>
                   <span>Homework: No</span>
-                </span>
+                </span> -->
                 <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
                   <i
                     class="iconify fs-18 courses-details__info_icon"
                     data-icon="mdi:devices"
                   ></i>
-                  <span>Device: Mobile/Notebook</span>
+                  <span>Device: Notebook</span>
                 </span>
                 <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
                   <i
@@ -324,13 +324,13 @@
                   ></i>
                   <span>Browser: Google Chrome</span>
                 </span>
-                <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
+                <!-- <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
                   <i
                     class="iconify fs-18 courses-details__info_icon"
                     data-icon="iconoir:link"
                   ></i>
                   <span>Access: Limited time</span>
-                </span>
+                </span> -->
                 <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
                   <i
                     class="iconify fs-18 courses-details__info_icon"
@@ -339,13 +339,13 @@
                   <span>Difficulty:</span>
                   <span class="rank-level fw-semibold">⭐☆☆☆☆ (1/5)</span>
                 </span>
-                <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
+                <!-- <span class="fs-14 d-flex align-items-center gap-10px mb-15px">
                   <i
                     class="iconify fs-18 courses-details__info_icon"
                     data-icon="mdi:school"
                   ></i>
                   <span>Onsite class: Business simulation</span>
-                </span>
+                </span> -->
               </div>
               <!-- <div class="courses-details__advertise border-radius-10px">
               <img
